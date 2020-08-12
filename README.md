@@ -2,108 +2,76 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.okta/okta-maven-plugin.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.okta%22%20a%3A%22okta-maven-plugin%22)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Okta CLI
-========
+Okta Maven Plugin
+=================
 
-The Okta CLI is the easiest way to get started with Okta! 
+Okta's Maven Plugin will help you get started with Okta without ever leaving your console.
 
-If you are a Java developer using Apache Maven, also checkout the [Okta Maven Plugin](maven-plugin/README.md). 
+## Prerequisite
 
-## Installation
-
-**macOS (via [Homebrew](https://brew.sh/)):**
-
-```bash
-brew cask install oktadeveloper/tap/okta
-```
-
-**Linux (via Flatpak)**
-
-```bash
-# Add Flathub repo
-flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-
-# install the package
-flatpak install com.okta.developer.CLI
-
-# add this to your appropriate dot file
-alias okta="flatpak run com.okta.developer.CLI"
-```
-
-**Linux and macOS:**
-
-```bash
-curl https://raw.githubusercontent.com/oktadeveloper/okta-cli/master/cli/src/main/scripts/install.sh | sh
-```
-
-**Windows (via Chocolatey)**
-
-```bash
-choco install okta
-```
-
-**Manual Installs**
-
-Download the binary for your OS from the [releases](https://github.com/oktadeveloper/okta-cli/releases) page. Manually install it to a directory on your PATH. 
+- Java 8+
 
 ## Usage
 
-Run `okta --help` or `okta help <command>` for more details.
+The basic usage is simply:
 
-## Sign Up For a Free Okta Developer Account
-
-Run `okta register` to sign up for a new account.  You will be prompted for your name and email address.  Account activation information will be emailed to you.
-
-## Log Into an Existing Account
-
-Configure the Okta CLI tool with an existing Okta account use `okta login` and follow the prompts.  
-
-## Create an Okta Application (OAuth 2.0 / OIDC)
-
-The Okta CLI tool can create Okta OAuth 2.0 / OIDC Applications for you with a few prompts. The following application types are supported:
-- Web - Backend applications, Java, .Net, PHP, etc
-- Single Page App (SPA) - Browser based applications
-- Native App - desktop and mobile applications
-- Service - Machine to Machine services
-
-Run `okta apps create` and you will be prompted for the required information.
-
-## Bash / Zsh Completion
-
-If you have "bash-completion" installed run one of the following commands:
-
-Linux
-
-```sh
-okta generate-completion > /etc/bash_completion.d/okta
+```bash
+mvn com.okta:okta-maven-plugin:register # or use the "login" goal if you already have an Okta account
+mvn com.okta:okta-maven-plugin:spring-boot
+# if you are building a JHipster app use "jhipster" or for other types of web apps, use the "web-app" goal
 ```
 
-Mac
+This will prompt you for required information and setup a new OIDC application for you.
 
-```sh
-okta generate-completion > /usr/local/etc/bash_completion.d/okta
+For more complete information see the [complete plugin documentation](https://oktadeveloper.github.io/okta-maven-plugin)
+
+## Spring Boot Quick start
+
+Create a new Spring Boot project
+```bash
+curl https://start.spring.io/starter.tgz -d dependencies=web,okta \
+  -d baseDir=okta-spring-security-example-app | tar -xzvf -
+cd okta-spring-security-example-app
 ```
 
-If you are not using "bash-completion", copy the output of `okta generate-completion` to your desired location, and source the file from your `~/.bash_profile` script, for example:
-
-```sh
-okta generate-completion > ~/okta.bash
-echo `. ~/okta.bash` >> ~/.bash_profile
+Run the Okta Maven Plugin to Register a new account and configure your new Spring OIDC application
+```bash
+./mvnw com.okta:okta-maven-plugin:spring-boot
 ```
 
-For more details on using bash completion see the [Picocli documentation](https://picocli.info/autocomplete.html#_installing_completion_scripts_permanently_in_bashzsh).
+Add a simple REST controller, for example replace your `src/main/java/com/example/demo/DemoApplication.java` with:
 
-## Contribute
+```java
+package com.example.demo;
 
-The easiest way to build the project is to use [sdkman]().
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-If you have `sdkman_auto_env=true` in your `~/.sdkman/etc/config`, then when you switch to the project folder, the correct
-JVM will be selected automatically.
+@RestController
+@SpringBootApplication
+public class DemoApplication {
 
-You can also type: `sdk env` and the correct JVM will be used while in the project folder.
+	public static void main(String[] args) {
+		SpringApplication.run(DemoApplication.class, args);
+	}
 
-Build with: `mvn clean install`
+	@GetMapping("/")
+	String hello(@AuthenticationPrincipal OidcUser user) {
+		return String.format("Welcome, %s", user.getFullName());
+	}
+}
+```
 
-**NOTE:** On IntelliJ (at least), you'll also need to add in the Lombok plugin to avoid compiler errors on getters and setters for data classes.
+Start your Spring Boot application:
 
-You can then run the Okta cli with: `./cli/target/okta`
+```bash
+./mvnw spring-boot:run
+```
+
+Now just browse to: `http://localhost:8080/` you will be prompted to login.
+
+Check your email to for your new account details!
