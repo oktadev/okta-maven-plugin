@@ -24,13 +24,12 @@
         <version>17</version>
     </parent>
 
-    <groupId>com.okta.cli</groupId>
-    <artifactId>okta-cli-tools</artifactId>
-    <version>0.4.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <groupId>com.okta</groupId>
+    <artifactId>okta-maven-plugin</artifactId>
+    <name>Okta Maven Plugin</name>
 
-    <name>Okta CLI Tools</name>
-    <description>A set of CLI tools that makes getting started with Okta even easier.</description>
+    <description>A Maven plugin that makes getting started with Okta even easier.</description>
+    <packaging>maven-plugin</packaging>
 
     <prerequisites>
         <maven>3.5.0</maven>
@@ -50,16 +49,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <okta.sdk.version>1.6.0</okta.sdk.version>
+        <doxia.version>1.8</doxia.version>
     </properties>
-
-    <modules>
-        <module>common</module>
-        <module>maven-plugin</module>
-        <!-- see below for enabling the CLI module when building with Graalvm -->
-        <!-- <module>cli</module>-->
-        <!-- <module>integration-tests</module> -->
-        <!-- <module>coverage</module> -->
-    </modules>
 
     <dependencyManagement>
         <dependencies>
@@ -129,6 +120,106 @@
         </dependencies>
     </dependencyManagement>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.okta.sdk</groupId>
+            <artifactId>okta-sdk-api</artifactId>
+            <version>${okta.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.okta.sdk</groupId>
+            <artifactId>okta-sdk-impl</artifactId>
+            <version>${okta.sdk.version}</version>
+            <!-- TODO: use runtime scope, this plugin uses internal APIs to inspect the environment -->
+        </dependency>
+        <dependency>
+            <groupId>com.okta.sdk</groupId>
+            <artifactId>okta-sdk-httpclient</artifactId>
+            <version>${okta.sdk.version}</version>
+            <!-- TODO: import the correct http client dep and move this back to runtime -->
+            <!-- <scope>runtime</scope> -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${maven.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+            <version>3.5</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.release</groupId>
+            <artifactId>maven-release-manager</artifactId>
+            <version>3.0.0-M1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.codehaus.groovy</groupId>
+                    <artifactId>groovy-all</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId> org.apache.maven.scm</groupId>
+                    <artifactId>maven-scm-providers-standard</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.8</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service</artifactId>
+            <version>1.0-rc6</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock-standalone</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-testng</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
     <build>
 
         <resources>
@@ -182,6 +273,47 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>3.2.0</version>
                 </plugin>
+                <plugin>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <configuration>
+                        <archive>
+                            <manifestEntries>
+                                <Automatic-Module-Name>com.okta.maven.orgcreation</Automatic-Module-Name>
+                            </manifestEntries>
+                        </archive>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-plugin-plugin</artifactId>
+                    <version>3.6.0</version>
+                    <configuration>
+                        <goalPrefix>okta</goalPrefix>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>generated-helpmojo</id>
+                            <goals>
+                                <goal>helpmojo</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.8.2</version>
+                    <configuration>
+                        <outputDirectory>target/gh-pages</outputDirectory>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <configuration>
+                        <excludeRoots>${project.build.directory}/generated-sources/plugin</excludeRoots>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -210,6 +342,24 @@
                             <goal>report</goal>
                         </goals>
                         <phase>verify</phase>
+                        <configuration>
+                            <excludes>
+                                <!-- generated class -->
+                                <exclude>com/okta/maven/orgcreation/HelpMojo.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-component-metadata</artifactId>
+                <version>2.0.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate-metadata</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -217,32 +367,6 @@
     </build>
 
     <profiles>
-        <profile>
-            <id>graalvm</id>
-            <activation>
-                <!-- There is no _easy_ way to detect if running with a GraalVM, so just assume Java 11 is GraalVM -->
-                <jdk>11</jdk>
-            </activation>
-            <modules>
-                <module>cli</module>
-                <module>integration-tests</module>
-                <module>coverage</module>
-            </modules>
-
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.github.spotbugs</groupId>
-                        <artifactId>spotbugs-maven-plugin</artifactId>
-                        <configuration>
-                            <!-- work around a SpotBugs Java 11 bug -->
-                            <excludeFilterFile>${root.dir}/src/findbugs/findbugs-exclude.xml,${root.dir}/src/findbugs/findbugs-exclude-jdk11.xml</excludeFilterFile>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <profile>
             <id>ci</id>
             <build>
@@ -271,5 +395,45 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>java-11</id>
+            <activation>
+                <jdk>11</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <configuration>
+                            <!-- work around a SpotBugs Java 11 bug -->
+                            <excludeFilterFile>${root.dir}/src/findbugs/findbugs-exclude.xml,${root.dir}/src/findbugs/findbugs-exclude-jdk11.xml</excludeFilterFile>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>
