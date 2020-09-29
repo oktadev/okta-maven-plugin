@@ -27,14 +27,22 @@ For more complete information see the [complete plugin documentation](https://ok
 
 ## Spring Boot Quick start
 
-Create a new Spring Boot project
+Create a new Spring Boot project:
+
 ```bash
 curl https://start.spring.io/starter.tgz -d dependencies=web,okta \
   -d baseDir=okta-spring-security-example-app | tar -xzvf -
 cd okta-spring-security-example-app
 ```
 
-Run the Okta Maven Plugin to Register a new account and configure your new Spring OIDC application
+Run the Okta Maven Plugin to Register a new account:
+
+```bash
+./mvnw com.okta:okta-maven-plugin:register
+```
+
+Then, configure your new Spring OIDC application:
+
 ```bash
 ./mvnw com.okta:okta-maven-plugin:spring-boot
 ```
@@ -55,14 +63,14 @@ import org.springframework.web.bind.annotation.RestController;
 @SpringBootApplication
 public class DemoApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
 
-	@GetMapping("/")
-	String hello(@AuthenticationPrincipal OidcUser user) {
-		return String.format("Welcome, %s", user.getFullName());
-	}
+    @GetMapping("/")
+    String hello(@AuthenticationPrincipal OidcUser user) {
+        return String.format("Welcome, %s", user.getFullName());
+    }
 }
 ```
 
